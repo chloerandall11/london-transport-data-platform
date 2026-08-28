@@ -1,0 +1,4 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/tfl-pipeline-env/bin/python",
+  "python.terminal.activateEnvironment": true
+}
