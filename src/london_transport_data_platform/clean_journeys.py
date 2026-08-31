@@ -33,6 +33,31 @@ def date_to_datetime(df_col: pd.Series) -> pd.Series:
     df_new_col = pd.to_datetime(df_col, format="%d/%m/%Y %H:%M")
     return df_new_col
 
+def validate_required_columns(df: pd.DataFrame) -> None:
+    required_cols = (
+    "Rental Id",
+    "Duration",
+    "Bike Id",
+    "End Date",
+    "EndStation Id",
+    "EndStation Name",
+    "Start Date",
+    "StartStation Id",
+    "StartStation Name",
+    )
+
+    existing_cols = df.columns.to_list()
+
+    missing_cols = []
+    for col in required_cols:
+        if col not in existing_cols:
+            missing_cols.append(col)
+
+    if missing_cols:
+        raise ValueError(
+    f"Missing required columns: {', '.join(missing_cols)}")
+
+
 
 def remove_nonpositive_durations(df: pd.DataFrame) -> pd.DataFrame:
     df_positive_durations = df[df["duration_seconds"] > 0].copy()
@@ -47,6 +72,7 @@ def normalise_station_names(df_col: pd.Series) -> pd.Series:
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
     df = load_journeys(config.input_path)
+    validate_required_columns(df)
     logger.info(
     "Loaded %d rows and %d columns from %s",
     len(df),

@@ -1,9 +1,12 @@
 import pandas as pd
+import pytest
 from london_transport_data_platform.clean_journeys import (
     date_to_datetime,
     normalise_station_names,
     remove_nonpositive_durations,
     standardise_columns,
+    load_journeys,
+    validate_required_columns,
 )
 
 def test_remove_nonpositive_durations():
@@ -42,4 +45,20 @@ def test_standardise_columns():
     test_df = pd.DataFrame(columns=["Rental Id", "Duration", "Start Date"])
     output_df = standardise_columns(test_df)
     assert output_df.columns.to_list() == ['rental_id', 'duration_seconds', 'started_at']
+    assert test_df.columns.tolist() == ["Rental Id", "Duration", "Start Date",]
 
+def test_load_journeys(tmp_path):
+    test_data = {"Rental Id": [1, 2],"Duration": [60, 120],}
+    test_df = pd.DataFrame(data=test_data)
+
+    csv_path = tmp_path / "test_load_journeys.csv"
+    test_df.to_csv(csv_path, index=False)
+    output_df = load_journeys(csv_path)
+
+    pd.testing.assert_frame_equal(output_df, test_df)
+
+def test_validate_required_columns():
+    test_df = pd.DataFrame(columns=["Rental Id", "Bike Id", "End Date", "EndStation Id", "EndStation Name", "Start Date", "StartStation Id", "StartStation Name",])
+
+    with pytest.raises(ValueError, match="Missing required columns: Duration",):
+        validate_required_columns(test_df)
