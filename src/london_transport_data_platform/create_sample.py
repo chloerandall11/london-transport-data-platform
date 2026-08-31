@@ -1,17 +1,22 @@
 # import 
 import pandas as pd
 from pathlib import Path
+import logging
 
-# getting file path to raw data
-root_path = Path(__file__).resolve().parents[1]
-file_path = 'data/raw/02aJourneyDataExtract07Fe16-20Feb2016.csv'
+logger = logging.getLogger(__name__)
 
-# calling first 1000 rows of data
-df = pd.read_csv(root_path / file_path, nrows=1000)
-print('Dataframe shape', df.shape)
-print('Column names as Python list', list(df.columns))
+def create_sample(
+    input_path: Path,
+    output_path: Path,
+    row_count: int = 1000,
+) -> int:
 
-# saving 1000 rows of data as a sample file
-output_path = 'data/raw/santander_journeys_sample.csv'
-df.to_csv(root_path / output_path, index = False)
-print(output_path)
+    # calling first 1000 rows of data
+    df = pd.read_csv(input_path, nrows=row_count)
+    logger.debug('Dataframe shape: %s', df.shape)
+    logger.debug('Existing columns: %s', list(df.columns))
+
+    df.to_csv(output_path, index = False)
+    logger.info('%d data saved to: %s', len(df), output_path)
+
+    return len(df)
