@@ -1,5 +1,5 @@
 import pandas as pd
-from src.clean_journeys import remove_nonpositive_durations
+from london_transport_data_platform.clean_journeys import remove_nonpositive_durations
 
 def test_remove_nonpositive_durations():
     test_data = {"duration_seconds": [0, -10, 60]}
