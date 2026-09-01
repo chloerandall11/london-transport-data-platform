@@ -7,6 +7,7 @@
       "request": "launch",
       "module": "london_transport_data_platform.cli",
       "args": [
+        "clean",
         "--input",
         "${workspaceFolder}/data/raw/santander_journeys_sample.csv",
         "--output",
