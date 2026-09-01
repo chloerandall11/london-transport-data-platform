@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "london-transport-data-platform"
+version = "0.1.0"
+description = "A reproducible data pipeline for TfL Santander Cycles journeys."
+requires-python = "==3.12.*"
+dependencies = [
+    "pandas==3.0.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+]
+
+[project.scripts]
+tfl-pipeline = "london_transport_data_platform.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

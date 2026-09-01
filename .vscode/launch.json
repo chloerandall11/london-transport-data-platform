@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug cleaning sample",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "london_transport_data_platform.cli",
+      "args": [
+        "--input",
+        "${workspaceFolder}/data/raw/santander_journeys_sample.csv",
+        "--output",
+        "${workspaceFolder}/data/processed/santander_journeys_clean.csv"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
