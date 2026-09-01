@@ -6,3 +6,8 @@ from pathlib import Path
 class PipelineConfig:
     input_path: Path
     output_path: Path
+
+@dataclass(frozen=True)
+class IngestionConfig:
+    source_url: str
+    destination_path: Path
