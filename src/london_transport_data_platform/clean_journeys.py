@@ -68,6 +68,13 @@ def normalise_station_names(df_col: pd.Series) -> pd.Series:
     normalised_df_col = df_col.str.strip().str.replace(r"\s+,", ",", regex=True)
     return normalised_df_col
 
+def invalid_rental_id_mask(df: pd.DataFrame) -> pd.Series:
+    df_rental_id = df["rental_id"]
+    boolean_mask_null = df_rental_id.isnull()
+    boolean_mask_duplicate = df_rental_id.duplicated(keep=False)
+
+    return boolean_mask_duplicate | boolean_mask_null
+
 
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
@@ -98,8 +105,6 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
     duplicated_rental_id_rows = df["rental_id"].duplicated().sum()
 
     # validate and clean durations
-    max_duration = df["duration_seconds"].max()
-    min_duration = df["duration_seconds"].min()
     low_duration_rows = (df["duration_seconds"] <= 0).sum()
     pre_filter_row_count = df.shape[0]
 

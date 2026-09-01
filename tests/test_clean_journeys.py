@@ -7,6 +7,7 @@ from london_transport_data_platform.clean_journeys import (
     standardise_columns,
     load_journeys,
     validate_required_columns,
+    invalid_rental_id_mask,
 )
 
 def test_remove_nonpositive_durations():
@@ -62,3 +63,19 @@ def test_validate_required_columns():
 
     with pytest.raises(ValueError, match="Missing required columns: Duration",):
         validate_required_columns(test_df)
+
+def test_invalid_rental_id_mask_null():
+    test_data = {"rental_id": [1, 2, None]}
+    test_df = pd.DataFrame(data=test_data)
+
+    boolean_mask = invalid_rental_id_mask(test_df)
+
+    assert boolean_mask.tolist() == [False, False, True]
+
+def test_invalid_rental_id_mask_duplicate():
+    test_data = {"rental_id": [1, 2, 2, 3]}
+    test_df = pd.DataFrame(data=test_data)
+
+    boolean_mask = invalid_rental_id_mask(test_df)
+
+    assert boolean_mask.tolist() == [False, True, True, False]
