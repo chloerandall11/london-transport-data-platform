@@ -13,6 +13,7 @@ from london_transport_data_platform.clean_journeys import (
     invalid_station_id_mask,
     add_rejection_reason,
     add_journey_rejection_reasons,
+    separate_accepted_rejected_rows,
 )
 
 def test_remove_nonpositive_durations():
@@ -178,3 +179,17 @@ def test_add_journey_rejection_reasons():
 
     assert "rejection_reason" not in test_df.columns
     assert output_df['rejection_reason'].tolist() == [None, 'invalid station_id, invalid rental_id', 'invalid duration_seconds', 'invalid started_at or ended_at timestamp']
+
+def test_separate_accepted_rejected_rows():
+    test_data = {"rejection_reason": [None, 'invalid station_id, invalid rental_id', 'invalid duration_seconds', None]}
+    test_df = pd.DataFrame(data=test_data)
+
+    df_accepted, df_rejected = separate_accepted_rejected_rows(test_df)
+
+    assert df_rejected['rejection_reason'].tolist() == ['invalid station_id, invalid rental_id', 'invalid duration_seconds']
+    assert df_accepted['rejection_reason'].isna().all()
+    assert len(test_df) == len(df_accepted) + len(df_rejected)
+    pd.testing.assert_frame_equal(
+            test_df,
+            pd.DataFrame(data=test_data),
+            )

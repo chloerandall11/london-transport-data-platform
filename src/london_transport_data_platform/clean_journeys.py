@@ -126,6 +126,20 @@ def add_journey_rejection_reasons(df: pd.DataFrame) -> pd.DataFrame:
 
     return output_df
 
+def separate_accepted_rejected_rows(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    boolean_mask_null = df['rejection_reason'].isnull()
+    boolean_mask_not_null = df['rejection_reason'].notnull()
+
+    df_null_copy = df.copy()
+    df_not_null_copy = df.copy()
+
+    df_accepted = df_null_copy.loc[boolean_mask_null]
+    df_rejected = df_not_null_copy.loc[boolean_mask_not_null]
+
+    return df_accepted, df_rejected
+
+
+
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
     df = load_journeys(config.input_path)
