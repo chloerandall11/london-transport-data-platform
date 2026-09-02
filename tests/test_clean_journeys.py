@@ -11,6 +11,7 @@ from london_transport_data_platform.clean_journeys import (
     invalid_duration_mask,
     invalid_timestamp_mask,
     invalid_station_id_mask,
+    add_rejection_reason,
 )
 
 def test_remove_nonpositive_durations():
@@ -119,3 +120,43 @@ def test_invalid_station_id_mask():
     boolean_mask = invalid_station_id_mask(test_df)
 
     assert boolean_mask.tolist() == [True, False, True, False, False, True, False, True, True, True]
+
+
+def test_add_rejection_reason():
+    test_data = {"end_station_id": [None, 2, 5],
+                "start_station_id": [1, 7, 3]}
+    test_df = pd.DataFrame(data=test_data)
+    boolean_mask = pd.Series([True, False, False], index=test_df.index)
+    rejection_reason = 'invalid station_id'
+
+    output_df = add_rejection_reason(test_df, boolean_mask, rejection_reason)
+
+    assert output_df['rejection_reason'].tolist() == ['invalid station_id', None, None]
+    pd.testing.assert_frame_equal(
+    test_df,
+    pd.DataFrame(data=test_data),
+    )
+    assert "rejection_reason" not in test_df.columns
+
+def test_add_rejection_reason_double():
+    test_data = {"end_station_id": [None, 2, 5],
+                    "start_station_id": [1, 7, 3],
+                    "rental_id": [None, 4, None]}
+    test_df = pd.DataFrame(data=test_data)
+    boolean_mask_station_id = pd.Series([True, False, False], index=test_df.index)
+    rejection_reason_station_id = 'invalid station_id'
+
+    output_df_station_id = add_rejection_reason(test_df, boolean_mask_station_id, rejection_reason_station_id)
+
+    boolean_mask_rental_id = pd.Series([True, False, True], index=test_df.index)
+    rejection_reason_rental_id = 'invalid rental_id'
+
+    output_df = add_rejection_reason(output_df_station_id, boolean_mask_rental_id, rejection_reason_rental_id)
+
+    assert output_df_station_id['rejection_reason'].tolist() == ['invalid station_id', None, None]
+    assert output_df['rejection_reason'].tolist() == ['invalid station_id, invalid rental_id', None, 'invalid rental_id']
+    pd.testing.assert_frame_equal(
+        test_df,
+        pd.DataFrame(data=test_data),
+        )
+    assert "rejection_reason" not in test_df.columns

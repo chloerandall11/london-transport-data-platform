@@ -101,6 +101,17 @@ def invalid_station_id_mask(df: pd.DataFrame) -> pd.Series:
 
     return boolean_mask_negative_end | boolean_mask_negative_start | boolean_mask_null_end | boolean_mask_null_start
 
+def add_rejection_reason(df: pd.DataFrame, boolean_mask: pd.Series, rejection_reason: str) -> pd.DataFrame:
+    df_copy = df.copy()
+    if 'rejection_reason' not in df_copy.columns:
+        df_copy['rejection_reason'] = None
+
+    already_has_reason_mask = (boolean_mask & df_copy["rejection_reason"].notna())
+    has_no_reason_mask = (boolean_mask & df_copy["rejection_reason"].isna())
+
+    df_copy.loc[has_no_reason_mask, "rejection_reason"] = rejection_reason
+    df_copy.loc[already_has_reason_mask, "rejection_reason"] += f", {rejection_reason}"
+    return df_copy
 
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
