@@ -8,6 +8,8 @@ from london_transport_data_platform.clean_journeys import (
     load_journeys,
     validate_required_columns,
     invalid_rental_id_mask,
+    invalid_duration_mask,
+    invalid_timestamp_mask,
 )
 
 def test_remove_nonpositive_durations():
@@ -75,7 +77,35 @@ def test_invalid_rental_id_mask_null():
 def test_invalid_rental_id_mask_duplicate():
     test_data = {"rental_id": [1, 2, 2, 3]}
     test_df = pd.DataFrame(data=test_data)
-
     boolean_mask = invalid_rental_id_mask(test_df)
 
     assert boolean_mask.tolist() == [False, True, True, False]
+
+def test_invalid_duration_mask():
+    test_data = {"duration_seconds": [37, 0, None, -10, 107]}
+    test_df = pd.DataFrame(data=test_data)
+    boolean_mask = invalid_duration_mask(test_df)
+
+    assert boolean_mask.tolist() == [False, True, True, True, False]
+
+
+def test_invalid_timestamp_mask():
+    test_data = {"started_at": ["07/02/2016 10:00",
+                                "07/02/2016 14:12",
+                                "08/02/2016 00:01",
+                                "08/02/2016 00:07",
+                                None,
+                                "18/02/2016 18:02"],
+                "ended_at": ["07/02/2016 10:10",
+                             "07/02/2016 10:30",
+                             "07/02/2016 23:01",
+                             "08/02/2016 00:07",
+                             "07/02/2016 13:06",
+                             None]}
+    test_df = pd.DataFrame(data=test_data)
+
+    test_df['started_at'] = pd.to_datetime(test_df['started_at'], format="%d/%m/%Y %H:%M")
+    test_df['ended_at'] = pd.to_datetime(test_df['ended_at'], format="%d/%m/%Y %H:%M")
+    boolean_mask = invalid_timestamp_mask(test_df)
+
+    assert boolean_mask.tolist() == [False, True, True, True, True, True]

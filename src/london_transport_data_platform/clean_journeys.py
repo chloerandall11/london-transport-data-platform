@@ -3,6 +3,7 @@ import pandas as pd
 from london_transport_data_platform.config import PipelineConfig
 import logging
 from london_transport_data_platform.validation import ValidationResult
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,6 @@ def validate_required_columns(df: pd.DataFrame) -> None:
     f"Missing required columns: {', '.join(missing_cols)}")
 
 
-
 def remove_nonpositive_durations(df: pd.DataFrame) -> pd.DataFrame:
     df_positive_durations = df[df["duration_seconds"] > 0].copy()
     return df_positive_durations
@@ -74,6 +74,22 @@ def invalid_rental_id_mask(df: pd.DataFrame) -> pd.Series:
     boolean_mask_duplicate = df_rental_id.duplicated(keep=False)
 
     return boolean_mask_duplicate | boolean_mask_null
+
+def invalid_duration_mask(df: pd.DataFrame) -> pd.Series:
+    df_duration = df["duration_seconds"]
+    boolean_mask_0_or_less = df_duration <= 0
+    boolean_mask_null =  df_duration.isnull()
+
+    return boolean_mask_0_or_less | boolean_mask_null
+
+def invalid_timestamp_mask(df: pd.DataFrame) -> pd.Series:
+    boolean_mask_null_started = df['started_at'].isnull()
+    boolean_mask_null_ended = df['ended_at'].isnull()
+
+    df_diff = (df['ended_at']-df['started_at']).dt.total_seconds()
+    boolean_mask_end_before_start = df_diff <= 0
+
+    return boolean_mask_end_before_start | boolean_mask_null_ended | boolean_mask_null_started
 
 
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
