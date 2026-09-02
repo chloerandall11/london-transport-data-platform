@@ -10,6 +10,7 @@ from london_transport_data_platform.clean_journeys import (
     invalid_rental_id_mask,
     invalid_duration_mask,
     invalid_timestamp_mask,
+    invalid_station_id_mask,
 )
 
 def test_remove_nonpositive_durations():
@@ -109,3 +110,12 @@ def test_invalid_timestamp_mask():
     boolean_mask = invalid_timestamp_mask(test_df)
 
     assert boolean_mask.tolist() == [False, True, True, True, True, True]
+
+def test_invalid_station_id_mask():
+    test_data = {"end_station_id": [None, 2, -2, 6, 10, 0, 13, 3, 6, 11],
+                "start_station_id": [1, 2, 3, 6, 8, 7, 7, None, 0, -3]}
+    test_df = pd.DataFrame(data=test_data)
+
+    boolean_mask = invalid_station_id_mask(test_df)
+
+    assert boolean_mask.tolist() == [True, False, True, False, False, True, False, True, True, True]

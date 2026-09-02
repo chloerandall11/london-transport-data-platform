@@ -91,6 +91,16 @@ def invalid_timestamp_mask(df: pd.DataFrame) -> pd.Series:
 
     return boolean_mask_end_before_start | boolean_mask_null_ended | boolean_mask_null_started
 
+def invalid_station_id_mask(df: pd.DataFrame) -> pd.Series:
+    boolean_mask_null_end = df['end_station_id'].isnull()
+    boolean_mask_null_start = df['start_station_id'].isnull()
+
+    boolean_mask_negative_end = df['end_station_id'] <= 0
+    boolean_mask_negative_start = df['start_station_id'] <= 0
+
+
+    return boolean_mask_negative_end | boolean_mask_negative_start | boolean_mask_null_end | boolean_mask_null_start
+
 
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
