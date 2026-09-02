@@ -48,6 +48,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Where to save the cleaned CSV.",
     )
 
+    clean_parser.add_argument(
+        "--rejected-output",
+        dest="rejected_output_path",
+        type=Path,
+        required=True,
+        help="Where to save the rejected record CSV.",
+        )
+
     ingest_parser.add_argument(
     "--url",
     dest="source_url",
@@ -73,15 +81,17 @@ def main() -> None:
         config = PipelineConfig(
             input_path=args.input_path,
             output_path=args.output_path,
+            rejected_output_path=args.rejected_output_path,
         )
 
         result = run_pipeline(config)
         logger.info(
         "Validation complete: input_rows=%d output_rows=%d "
-        "duration_mismatch_rows=%d duplicate_rows=%d "
+        "rejected_rows=%d duration_mismatch_rows=%d duplicate_rows=%d "
         "duplicate_rental_id_rows=%d nonpositive_duration_rows=%d",
         result.input_rows,
         result.output_rows,
+        result.rejected_rows,
         result.duration_mismatch_rows,
         result.duplicate_rows,
         result.duplicate_rental_id_rows,

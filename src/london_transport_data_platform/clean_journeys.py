@@ -172,7 +172,9 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
     low_duration_rows = (df["duration_seconds"] <= 0).sum()
     pre_filter_row_count = df.shape[0]
 
-    df = remove_nonpositive_durations(df)
+    # splitting accepted and rejected records
+    df = add_journey_rejection_reasons(df)
+    df, rejected_df = separate_accepted_rejected_rows(df)
     post_filter_row_count = df.shape[0]
 
     # normalising station names
@@ -196,6 +198,9 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
     df = df[column_order]
     logger.debug("Output columns: %s", df.columns.tolist())
 
+    # saving rejected to rejected file
+    rejected_df.to_csv(config.rejected_output_path, index=False)
+
     # save cleaned df as a csv
     df.to_csv(config.output_path, index=False)
     logger.info("Wrote cleaned journeys to %s", config.output_path)
@@ -203,6 +208,7 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
     return ValidationResult(
         input_rows=pre_filter_row_count,
         output_rows=post_filter_row_count,
+        rejected_rows= len(rejected_df),
         duration_mismatch_rows=int(unequal_rows),
         duplicate_rows=int(duplicated_rows),
         duplicate_rental_id_rows=int(duplicated_rental_id_rows),
