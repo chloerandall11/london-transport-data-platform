@@ -59,11 +59,6 @@ def validate_required_columns(df: pd.DataFrame) -> None:
     f"Missing required columns: {', '.join(missing_cols)}")
 
 
-def remove_nonpositive_durations(df: pd.DataFrame) -> pd.DataFrame:
-    df_positive_durations = df[df["duration_seconds"] > 0].copy()
-    return df_positive_durations
-
-
 def normalise_station_names(df_col: pd.Series) -> pd.Series:
     normalised_df_col = df_col.str.strip().str.replace(r"\s+,", ",", regex=True)
     return normalised_df_col

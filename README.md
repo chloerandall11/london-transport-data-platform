@@ -117,6 +117,16 @@ Load -> standardise -> validate -> filter -> normalise
                  +--> ValidationResult and structured logs
 ```
 
+## Validation rules
+
+- Rental IDs cannot be null and must be unique.
+- Durations must be numbers and greater than 0.
+- Timestamps must be convertible to datetimes, and the end time must occur after the start time.
+- Station IDs must be numbers, positive, and integers.
+- Invalid rows are saved in a rejected rows file with reasons.
+- Input rows must equal accepted rows plus rejected rows.
+- Rerunning cleaning safely replaces both output files.
+
 ## Current components:
 
 - `cli.py` provides the `clean` and `ingest` commands and accepts paths

@@ -3,7 +3,6 @@ import pytest
 from london_transport_data_platform.clean_journeys import (
     date_to_datetime,
     normalise_station_names,
-    remove_nonpositive_durations,
     standardise_columns,
     load_journeys,
     validate_required_columns,
@@ -15,13 +14,6 @@ from london_transport_data_platform.clean_journeys import (
     add_journey_rejection_reasons,
     separate_accepted_rejected_rows,
 )
-
-def test_remove_nonpositive_durations():
-    test_data = {"duration_seconds": [0, -10, 60]}
-    test_df = pd.DataFrame(data=test_data)
-    output_df = remove_nonpositive_durations(test_df)
-    assert output_df["duration_seconds"].tolist() == [60]
-    assert len(test_df) == 3
 
 def test_normalise_station_names():
     test_data = {"station_name": [" Moorfields , Moorgate", "Queen Mother Sports Centre, Victoria", "Belgrove Street , King's Cross "]}
