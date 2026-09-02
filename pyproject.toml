@@ -9,6 +9,7 @@ description = "A reproducible data pipeline for TfL Santander Cycles journeys."
 requires-python = "==3.12.*"
 dependencies = [
     "pandas==3.0.5",
+    "pyarrow==25.0.1",
 ]
 
 [project.optional-dependencies]
