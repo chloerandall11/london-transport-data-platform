@@ -43,4 +43,12 @@ def test_run_pipeline(tmp_path):
     assert rejected_df['rental_id'].tolist() == [2, 5]
     assert rejected_df['rejection_reason'].tolist() == ['invalid started_at or ended_at timestamp, invalid duration_seconds', 'invalid duration_seconds']
 
+    second_result = run_pipeline(config)
+    second_output_df = pd.read_csv(output_path)
+    second_rejected_df = pd.read_csv(rejected_output_path)
+
+    assert second_result == result
+    pd.testing.assert_frame_equal(output_df, second_output_df)
+    pd.testing.assert_frame_equal(rejected_df, second_rejected_df)
+
 
