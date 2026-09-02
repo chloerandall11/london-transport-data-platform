@@ -86,11 +86,11 @@ def test_invalid_rental_id_mask_duplicate():
     assert boolean_mask.tolist() == [False, True, True, False]
 
 def test_invalid_duration_mask():
-    test_data = {"duration_seconds": [37, 0, None, -10, 107]}
+    test_data = {"duration_seconds": [37, 0, None, -10, 107, 'not-a-duration']}
     test_df = pd.DataFrame(data=test_data)
     boolean_mask = invalid_duration_mask(test_df)
 
-    assert boolean_mask.tolist() == [False, True, True, True, False]
+    assert boolean_mask.tolist() == [False, True, True, True, False, True]
 
 
 def test_invalid_timestamp_mask():
@@ -115,13 +115,13 @@ def test_invalid_timestamp_mask():
     assert boolean_mask.tolist() == [False, True, True, True, True, True]
 
 def test_invalid_station_id_mask():
-    test_data = {"end_station_id": [None, 2, -2, 6, 10, 0, 13, 3, 6, 11],
-                "start_station_id": [1, 2, 3, 6, 8, 7, 7, None, 0, -3]}
+    test_data = {"end_station_id": [None, 2, -2, 6, 10, 0, 13, 3, 6, 11, 2.5, 'station-id', '12'],
+                "start_station_id": [1, 2, 3, 6, 8, 7, 7, None, 0, -3, 5, 7, 22]}
     test_df = pd.DataFrame(data=test_data)
 
     boolean_mask = invalid_station_id_mask(test_df)
 
-    assert boolean_mask.tolist() == [True, False, True, False, False, True, False, True, True, True]
+    assert boolean_mask.tolist() == [True, False, True, False, False, True, False, True, True, True, True, True, False]
 
 
 def test_add_rejection_reason():
@@ -193,3 +193,13 @@ def test_separate_accepted_rejected_rows():
             test_df,
             pd.DataFrame(data=test_data),
             )
+
+def test_date_to_datetime_bad_vals():
+    test_data = {"start_date": ["07/02/2016 00:00", None, "not-a-date"]}
+    test_df = pd.DataFrame(data=test_data, dtype=str)
+
+    output_series = date_to_datetime(test_df['start_date'])
+
+    assert pd.isna(output_series.iloc[1])
+    assert pd.isna(output_series.iloc[2])
+    assert output_series.iloc[0] == pd.Timestamp("2016-02-07 00:00")

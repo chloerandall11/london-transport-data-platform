@@ -31,7 +31,7 @@ def standardise_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def date_to_datetime(df_col: pd.Series) -> pd.Series:
-    df_new_col = pd.to_datetime(df_col, format="%d/%m/%Y %H:%M")
+    df_new_col = pd.to_datetime(df_col, format="%d/%m/%Y %H:%M", errors="coerce")
     return df_new_col
 
 def validate_required_columns(df: pd.DataFrame) -> None:
@@ -77,8 +77,11 @@ def invalid_rental_id_mask(df: pd.DataFrame) -> pd.Series:
 
 def invalid_duration_mask(df: pd.DataFrame) -> pd.Series:
     df_duration = df["duration_seconds"]
-    boolean_mask_0_or_less = df_duration <= 0
-    boolean_mask_null =  df_duration.isnull()
+    df_copy = df_duration.copy()
+
+    df_copy = pd.to_numeric(df_copy, errors='coerce')
+    boolean_mask_0_or_less = df_copy <= 0
+    boolean_mask_null =  df_copy.isnull()
 
     return boolean_mask_0_or_less | boolean_mask_null
 
@@ -92,14 +95,21 @@ def invalid_timestamp_mask(df: pd.DataFrame) -> pd.Series:
     return boolean_mask_end_before_start | boolean_mask_null_ended | boolean_mask_null_started
 
 def invalid_station_id_mask(df: pd.DataFrame) -> pd.Series:
-    boolean_mask_null_end = df['end_station_id'].isnull()
-    boolean_mask_null_start = df['start_station_id'].isnull()
+    df_copy = df.copy()
 
-    boolean_mask_negative_end = df['end_station_id'] <= 0
-    boolean_mask_negative_start = df['start_station_id'] <= 0
+    df_copy['end_station_id'] = pd.to_numeric(df_copy['end_station_id'], errors='coerce')
+    df_copy['start_station_id'] = pd.to_numeric(df_copy['start_station_id'], errors='coerce')
+    boolean_mask_null_end = df_copy['end_station_id'].isnull()
+    boolean_mask_null_start = df_copy['start_station_id'].isnull()
+
+    boolean_mask_negative_end = df_copy['end_station_id'] <= 0
+    boolean_mask_negative_start = df_copy['start_station_id'] <= 0
+
+    boolean_mask_int_end = df_copy['end_station_id'] % 1 != 0
+    boolean_mask_int_start = df_copy['start_station_id'] % 1 != 0
 
 
-    return boolean_mask_negative_end | boolean_mask_negative_start | boolean_mask_null_end | boolean_mask_null_start
+    return boolean_mask_int_start | boolean_mask_int_end | boolean_mask_negative_end | boolean_mask_negative_start | boolean_mask_null_end | boolean_mask_null_start
 
 def add_rejection_reason(df: pd.DataFrame, boolean_mask: pd.Series, rejection_reason: str) -> pd.DataFrame:
     df_copy = df.copy()
@@ -154,6 +164,9 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # standardise column names
     df = standardise_columns(df)
     logger.debug("Standardised columns: %s", df.columns.tolist())
+
+    # standardise duration column
+    df["duration_seconds"] = pd.to_numeric(df["duration_seconds"],errors="coerce")
 
     # change date formats to datetime type
     df["started_at"] = date_to_datetime(df["started_at"])
