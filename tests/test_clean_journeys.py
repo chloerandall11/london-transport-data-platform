@@ -12,6 +12,7 @@ from london_transport_data_platform.clean_journeys import (
     invalid_timestamp_mask,
     invalid_station_id_mask,
     add_rejection_reason,
+    add_journey_rejection_reasons,
 )
 
 def test_remove_nonpositive_durations():
@@ -160,3 +161,20 @@ def test_add_rejection_reason_double():
         pd.DataFrame(data=test_data),
         )
     assert "rejection_reason" not in test_df.columns
+
+def test_add_journey_rejection_reasons():
+    test_data = {"end_station_id": [1, 2, 5, 6],
+                "start_station_id": [4, None, 3, 4],
+                "rental_id": [709, None, 608, 889],
+                "duration_seconds": [357, 4, 0, 244],
+                "started_at": ["07/02/2016 10:00", "07/02/2016 15:00", "07/02/2016 17:00", "07/02/2016 21:00"],
+                "ended_at": ["07/02/2016 10:10", "07/02/2016 15:10", "07/02/2016 17:10", "07/02/2016 21:00"],
+                }
+    test_df = pd.DataFrame(data=test_data)
+    test_df['started_at'] = pd.to_datetime(test_df['started_at'], format="%d/%m/%Y %H:%M")
+    test_df['ended_at'] = pd.to_datetime(test_df['ended_at'], format="%d/%m/%Y %H:%M")
+
+    output_df = add_journey_rejection_reasons(test_df)
+
+    assert "rejection_reason" not in test_df.columns
+    assert output_df['rejection_reason'].tolist() == [None, 'invalid station_id, invalid rental_id', 'invalid duration_seconds', 'invalid started_at or ended_at timestamp']

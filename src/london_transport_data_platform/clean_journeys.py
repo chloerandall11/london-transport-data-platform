@@ -113,6 +113,19 @@ def add_rejection_reason(df: pd.DataFrame, boolean_mask: pd.Series, rejection_re
     df_copy.loc[already_has_reason_mask, "rejection_reason"] += f", {rejection_reason}"
     return df_copy
 
+def add_journey_rejection_reasons(df: pd.DataFrame) -> pd.DataFrame:
+    boolean_mask_station_id = invalid_station_id_mask(df)
+    boolean_mask_timestamp = invalid_timestamp_mask(df)
+    boolean_mask_duration = invalid_duration_mask(df)
+    boolean_mask_rental_id = invalid_rental_id_mask(df)
+
+    output_df = add_rejection_reason(df, boolean_mask_station_id, 'invalid station_id')
+    output_df = add_rejection_reason(output_df, boolean_mask_timestamp, 'invalid started_at or ended_at timestamp')
+    output_df = add_rejection_reason(output_df, boolean_mask_duration, 'invalid duration_seconds')
+    output_df = add_rejection_reason(output_df, boolean_mask_rental_id, 'invalid rental_id')
+
+    return output_df
+
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
     df = load_journeys(config.input_path)
