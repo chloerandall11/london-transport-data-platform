@@ -6,6 +6,7 @@ from pathlib import Path
 class PipelineConfig:
     input_path: Path
     output_path: Path
+    rejected_output_path: Path
 
 @dataclass(frozen=True)
 class IngestionConfig:

@@ -4,7 +4,7 @@
 On the side data-engineering project. Reusable pipeline to analyse TfL demand (currently Santander Cycles), with the idea in the future to link this with weather at the time.
 
 ## Current scope
-Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to a new file. The 1,000-row sample is kept for development and testing. The package, CLI, and automated tests are working.
+Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to a new file. The 1,000-row sample is kept for development and testing. Any rejected rows are saved to a separate file with their reasoning for failing. The package, CLI, and automated tests are working.
 
 PostgreSQL, Parquet, weather ingestion, Docker, and CI are planned but not yet implemented.
 
@@ -73,13 +73,14 @@ The CLI requires explicit input and output paths:
 ```bash
 tfl-pipeline clean \
   --input data/raw/santander_journeys_sample.csv \
-  --output data/processed/santander_journeys_clean.csv
+  --output data/processed/santander_journeys_clean.csv \
+  --rejected-output data/processed/santander_journeys_rejected.csv
 ```
 
 A successful sample run reports:
 
 ```text
-Validation complete: input_rows=<number> output_rows=<number> duration_mismatch_rows=<number> duplicate_rows=<number> duplicate_rental_id_rows=<number> nonpositive_duration_rows=<number>
+Validation complete: input_rows=<number> output_rows=<number> rejected_rows=<number> duration_mismatch_rows=<number> duplicate_rows=<number> duplicate_rental_id_rows=<number> nonpositive_duration_rows=<number>
 ```
 Depending on the sample data, these counts will vary.
 
@@ -109,10 +110,22 @@ IngestionConfig -> download raw file
                  v
 Load -> standardise -> validate -> filter -> normalise
                  |
-                 +--> cleaned CSV
+                 +--> accepted rows -> normalise -> cleaned CSV
+                 |
+                 +--> rejected CSV with rejection reasons
                  |
                  +--> ValidationResult and structured logs
 ```
+
+## Validation rules
+
+- Rental IDs cannot be null and must be unique.
+- Durations must be numbers and greater than 0.
+- Timestamps must be convertible to datetimes, and the end time must occur after the start time.
+- Station IDs must be numbers, positive, and integers.
+- Invalid rows are saved in a rejected rows file with reasons.
+- Input rows must equal accepted rows plus rejected rows.
+- Rerunning cleaning safely replaces both output files.
 
 ## Current components:
 
@@ -121,7 +134,7 @@ Load -> standardise -> validate -> filter -> normalise
 - `clean_journeys.py` performs loading, validation, transformation, and export
 - `validation.py` defines the structured validation result
 - `create_sample.py` creates a deterministic development sample
-- `tests/` contains automated unit tests
+- `tests/` contains automated unit tests, and cli, pipeline, ingestion tests
 - `ingest.py` downloads the configured raw CSV and creates its provenance metadata
 - `provenance.py` defines the information recorded about each downloaded source file
 
