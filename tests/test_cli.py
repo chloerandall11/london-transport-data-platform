@@ -13,6 +13,8 @@ def test_clean_build_parser_accepts_path():
         "clean.csv",
         "--rejected-output",
         "rejected.csv",
+        "--parquet-output",
+        "clean.parquet",
     ]
     )
 
@@ -20,3 +22,4 @@ def test_clean_build_parser_accepts_path():
     assert args.rejected_output_path == Path("rejected.csv")
     assert args.output_path == Path("clean.csv")
     assert args.input_path == Path("input.csv")
+    assert args.parquet_output_path == Path("clean.parquet")

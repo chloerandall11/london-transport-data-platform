@@ -4,9 +4,9 @@
 On the side data-engineering project. Reusable pipeline to analyse TfL demand (currently Santander Cycles), with the idea in the future to link this with weather at the time.
 
 ## Current scope
-Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to a new file. The 1,000-row sample is kept for development and testing. Any rejected rows are saved to a separate file with their reasoning for failing. The package, CLI, and automated tests are working.
+Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to two new files: CSV and Parquet. The 1,000-row sample is kept for development and testing. Any rejected rows are saved to a separate file with their reasoning for failing. The package, CLI, and automated tests are working.
 
-PostgreSQL, Parquet, weather ingestion, Docker, and CI are planned but not yet implemented.
+PostgreSQL, weather ingestion, Docker, and CI are planned but not yet implemented.
 
 ## Data provenance
 - Source: [TfL Cycling Open Data](https://cycling.data.tfl.gov.uk/)
@@ -74,7 +74,8 @@ The CLI requires explicit input and output paths:
 tfl-pipeline clean \
   --input data/raw/santander_journeys_sample.csv \
   --output data/processed/santander_journeys_clean.csv \
-  --rejected-output data/processed/santander_journeys_rejected.csv
+  --rejected-output data/processed/santander_journeys_rejected.csv \
+  --parquet-output data/processed/santander_journeys_clean.parquet
 ```
 
 A successful sample run reports:
@@ -138,4 +139,4 @@ Load -> standardise -> validate -> filter -> normalise
 - `ingest.py` downloads the configured raw CSV and creates its provenance metadata
 - `provenance.py` defines the information recorded about each downloaded source file
 
-Parquet and PostgreSQL will be added as later output layers without replacing the existing validation and cleaning stages.
+PostgreSQL will be added as later output layers without replacing the existing validation and cleaning stages.

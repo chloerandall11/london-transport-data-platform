@@ -4,6 +4,7 @@ from london_transport_data_platform.config import PipelineConfig
 import logging
 from london_transport_data_platform.validation import ValidationResult
 import datetime as dt
+from london_transport_data_platform.parquet_io import write_parquet
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +212,10 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
 
     # save cleaned df as a csv
     df.to_csv(config.output_path, index=False)
-    logger.info("Wrote cleaned journeys to %s", config.output_path)
+
+    # save cleaned df as a parquet
+    write_parquet(df, config.parquet_output_path)
+    logger.info("Wrote cleaned journeys to %s, %s", config.output_path, config.parquet_output_path)
 
     return ValidationResult(
         input_rows=pre_filter_row_count,

@@ -13,7 +13,9 @@
         "--output",
         "${workspaceFolder}/data/processed/santander_journeys_clean.csv",
         "--rejected-output",
-        "${workspaceFolder}/data/processed/santander_journeys_rejected.csv"
+        "${workspaceFolder}/data/processed/santander_journeys_rejected.csv",
+        "--parquet-output",
+        "${workspaceFolder}/data/processed/santander_journeys_clean.parquet",
       ],
       "console": "integratedTerminal",
       "justMyCode": true
