@@ -20,5 +20,19 @@ def test_write_parquet(tmp_path):
         read_test_df,
         )
 
+def test_write_partitioned_parquet(tmp_path):
+    test_data = {"journey_date": ["2016-02-07", "2016-02-13"], "rental_id": [1, 2]}
+    test_df = pd.DataFrame(data=test_data)
 
+    output_path = tmp_path / "processed" / "journeys"
 
+    write_parquet(test_df, output_path, partition_cols=["journey_date"],)
+
+    assert (output_path / "journey_date=2016-02-07").exists()
+    assert (output_path / "journey_date=2016-02-13").exists()
+
+    # checking idempotency
+    write_parquet(test_df, output_path, partition_cols=["journey_date"],)
+    output_df = pd.read_parquet(output_path)
+
+    assert len(output_df) == 2

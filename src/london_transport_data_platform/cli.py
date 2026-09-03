@@ -61,7 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
             dest="parquet_output_path",
             type=Path,
             required=True,
-            help="Where to save the parquet record.",
+            help="Directory to save the partitioned parquet.",
             )
 
     ingest_parser.add_argument(

@@ -4,7 +4,7 @@
 On the side data-engineering project. Reusable pipeline to analyse TfL demand (currently Santander Cycles), with the idea in the future to link this with weather at the time.
 
 ## Current scope
-Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to two new files: CSV and Parquet. The 1,000-row sample is kept for development and testing. Any rejected rows are saved to a separate file with their reasoning for failing. The package, CLI, and automated tests are working.
+Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to two new places: CSV and a Parquet dataset partitioned by journey date. The 1,000-row sample is kept for development and testing. Any rejected rows are saved to a separate file with their reasoning for failing. The package, CLI, and automated tests are working.
 
 PostgreSQL, weather ingestion, Docker, and CI are planned but not yet implemented.
 
@@ -75,9 +75,10 @@ tfl-pipeline clean \
   --input data/raw/santander_journeys_sample.csv \
   --output data/processed/santander_journeys_clean.csv \
   --rejected-output data/processed/santander_journeys_rejected.csv \
-  --parquet-output data/processed/santander_journeys_clean.parquet
+  --parquet-output data/processed/santander_journeys_clean
 ```
 
+The `--parquet-output` is a directory where the data is partitioned by `journey_date`.
 A successful sample run reports:
 
 ```text
