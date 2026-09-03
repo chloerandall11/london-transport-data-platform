@@ -66,6 +66,41 @@ tfl-pipeline clean --help
 pytest -q
 ```
 
+## Local PostgreSQL
+
+- Docker Desktop is required
+- `.env.example` shows the required config names - you must create your own `.env` file and replace the example password
+- `.env` is automatically ignored by git here
+
+Create the local environment file and replace its example password:
+
+```bash
+cp .env.example .env
+```
+
+Start PostgreSQL and check its status:
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Test the database connection:
+
+```bash
+docker compose exec postgres \
+  psql -U tfl_pipeline -d london_transport \
+  -c "SELECT current_database(), current_user;"
+```
+
+Stop PostgreSQL:
+
+```bash
+docker compose down
+```
+
+The named database volume is retained by `docker compose down`. Using `docker compose down --volumes` also deletes the local database data and should only be used when deliberately resetting it.
+
 ## Running the pipeline
 
 The CLI requires explicit input and output paths:
@@ -140,4 +175,4 @@ Load -> standardise -> validate -> filter -> normalise
 - `ingest.py` downloads the configured raw CSV and creates its provenance metadata
 - `provenance.py` defines the information recorded about each downloaded source file
 
-PostgreSQL will be added as later output layers without replacing the existing validation and cleaning stages.
+PostgreSQL now runs locally through Docker Compose. Database schema creation and pipeline loading will be added next.
