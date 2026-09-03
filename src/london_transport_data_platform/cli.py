@@ -56,6 +56,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Where to save the rejected record CSV.",
         )
 
+    clean_parser.add_argument(
+            "--parquet-output",
+            dest="parquet_output_path",
+            type=Path,
+            required=True,
+            help="Directory to save the partitioned parquet.",
+            )
+
     ingest_parser.add_argument(
     "--url",
     dest="source_url",
@@ -82,6 +90,7 @@ def main() -> None:
             input_path=args.input_path,
             output_path=args.output_path,
             rejected_output_path=args.rejected_output_path,
+            parquet_output_path=args.parquet_output_path
         )
 
         result = run_pipeline(config)

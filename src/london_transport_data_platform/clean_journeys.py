@@ -4,6 +4,7 @@ from london_transport_data_platform.config import PipelineConfig
 import logging
 from london_transport_data_platform.validation import ValidationResult
 import datetime as dt
+from london_transport_data_platform.parquet_io import write_parquet
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,11 @@ def separate_accepted_rejected_rows(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.
 
     return df_accepted, df_rejected
 
+def add_journey_date(df: pd.DataFrame) -> pd.DataFrame:
+    df_copy = df.copy()
+    df_copy['journey_date'] = df_copy['started_at'].dt.strftime("%Y-%m-%d")
 
+    return df_copy
 
 def run_pipeline(config: PipelineConfig) -> ValidationResult:
     # read csv as dataframe
@@ -185,6 +190,9 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
     df, rejected_df = separate_accepted_rejected_rows(df)
     post_filter_row_count = df.shape[0]
 
+    # adding journey_date column
+    df = add_journey_date(df)
+
     # normalising station names
     df["start_station_name"] = normalise_station_names(df["start_station_name"])
     df["end_station_name"] = normalise_station_names(df["end_station_name"])
@@ -195,6 +203,7 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
         "rental_id",
         "bike_id",
         "started_at",
+        "journey_date",
         "start_station_id",
         "start_station_name",
         "ended_at",
@@ -211,7 +220,10 @@ def run_pipeline(config: PipelineConfig) -> ValidationResult:
 
     # save cleaned df as a csv
     df.to_csv(config.output_path, index=False)
-    logger.info("Wrote cleaned journeys to %s", config.output_path)
+
+    # save cleaned df as a parquet
+    write_parquet(df, config.parquet_output_path, partition_cols=["journey_date"])
+    logger.info("Wrote cleaned journeys to %s, %s", config.output_path, config.parquet_output_path)
 
     return ValidationResult(
         input_rows=pre_filter_row_count,

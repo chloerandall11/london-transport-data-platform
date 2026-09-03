@@ -13,6 +13,7 @@ from london_transport_data_platform.clean_journeys import (
     add_rejection_reason,
     add_journey_rejection_reasons,
     separate_accepted_rejected_rows,
+    add_journey_date,
 )
 
 def test_normalise_station_names():
@@ -195,3 +196,13 @@ def test_date_to_datetime_bad_vals():
     assert pd.isna(output_series.iloc[1])
     assert pd.isna(output_series.iloc[2])
     assert output_series.iloc[0] == pd.Timestamp("2016-02-07 00:00")
+
+def test_add_journey_date():
+    test_data = {"started_at": [pd.Timestamp("2016-02-07 00:00"),
+    pd.Timestamp("2016-02-13 15:45"),]}
+    test_df = pd.DataFrame(data=test_data)
+
+    output_df = add_journey_date(test_df)
+
+    assert output_df["journey_date"].tolist() == ["2016-02-07", "2016-02-13",]
+    assert "journey_date" not in test_df.columns
