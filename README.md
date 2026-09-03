@@ -85,6 +85,8 @@ docker compose up -d
 docker compose ps
 ```
 
+When PostgreSQL starts with a fresh database volume, it automatically runs `sql/schema.sql` and creates the `dim_station`, `dim_date`, `pipeline_run`, and `fact_journey` tables.
+
 Test the database connection:
 
 ```bash
@@ -175,4 +177,4 @@ Load -> standardise -> validate -> filter -> normalise
 - `ingest.py` downloads the configured raw CSV and creates its provenance metadata
 - `provenance.py` defines the information recorded about each downloaded source file
 
-PostgreSQL now runs locally through Docker Compose. Database schema creation and pipeline loading will be added next.
+PostgreSQL now runs locally through Docker Compose and initializes the dimensional schema automatically. Loading the processed journey data is the next database stage.
