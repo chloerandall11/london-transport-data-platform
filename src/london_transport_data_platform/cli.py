@@ -1,8 +1,9 @@
 import argparse
 from pathlib import Path
 from london_transport_data_platform.clean_journeys import run_pipeline
-from london_transport_data_platform.config import PipelineConfig, IngestionConfig
+from london_transport_data_platform.config import PipelineConfig, IngestionConfig, PostgresLoadConfig, database_config_from_environment
 from london_transport_data_platform.ingest import ingest_file
+from london_transport_data_platform.load_postgres import connect_database, load_processed_journeys
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_parser = subparsers.add_parser(
     "ingest",
     help="Download a raw TfL journey CSV with provenance.",
+    )
+
+    load_parser = subparsers.add_parser(
+    "load",
+    help="Load processed journey data into PostgreSQL.",
     )
 
     clean_parser.add_argument(
@@ -79,6 +85,30 @@ def build_parser() -> argparse.ArgumentParser:
     help="Local path for the downloaded raw CSV.",
     )
 
+    load_parser.add_argument(
+    "--parquet-input",
+    dest="parquet_input_path",
+    type=Path,
+    required=True,
+    help="Partitioned Parquet dataset containing accepted journeys.",
+    )
+
+    load_parser.add_argument(
+        "--rejected-input",
+        dest="rejected_input_path",
+        type=Path,
+        required=True,
+        help="CSV file containing rejected journey rows.",
+        )
+
+    load_parser.add_argument(
+        "--metadata",
+        dest="metadata_path",
+        type=Path,
+        required=True,
+        help="JSON file containing source provenance metadata.",
+        )
+
     return parser
 
 
@@ -120,6 +150,19 @@ def main() -> None:
             metadata.file_size_bytes,
             metadata.checksum_sha256,
             )
+
+    elif args.command == "load":
+        load_config = PostgresLoadConfig(
+        parquet_input_path=args.parquet_input_path,
+        rejected_input_path=args.rejected_input_path,
+        metadata_path=args.metadata_path)
+
+        database_config = database_config_from_environment()
+
+        with connect_database(database_config) as connection:
+            run_id = load_processed_journeys(connection, load_config)
+
+        logger.info("PostgreSQL load complete: pipeline_run_id=%d", run_id)
 
 if __name__ == "__main__":
     main()
