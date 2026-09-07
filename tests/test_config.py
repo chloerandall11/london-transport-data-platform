@@ -1,5 +1,10 @@
-from london_transport_data_platform.config import DatabaseConfig, database_config_from_environment
 import pytest
+
+from london_transport_data_platform.config import (
+    DatabaseConfig,
+    database_config_from_environment,
+)
+
 
 def test_database_config_from_environment(monkeypatch):
     monkeypatch.setenv("POSTGRES_HOST", "test-host")
@@ -15,7 +20,8 @@ def test_database_config_from_environment(monkeypatch):
         port=5432,
         dbname="test-database",
         user="test-user",
-        password="test-password")
+        password="test-password",
+    )
 
     assert result == expected
 

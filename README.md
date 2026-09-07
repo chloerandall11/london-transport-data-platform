@@ -6,7 +6,7 @@ On the side data-engineering project. Reusable pipeline to analyse TfL demand (c
 ## Current scope
 Currently downloads historical TfL Santander Cycles data and records where it came from. The cleaning pipeline uses the input and output paths given in the CLI, standardises the columns and values, converts timestamps into datetimes, checks for duplicates, validates journey durations, removes non-positive duration records, and writes the cleaned data to two new places: CSV and a Parquet dataset partitioned by journey date. The 1,000-row sample is kept for development and testing. Any rejected rows are saved to a separate file with their reasoning for failing. The package, CLI, and automated tests are working.
 
-PostgreSQL, weather ingestion, Docker, and CI are planned but not yet implemented.
+PostgreSQL and Docker are now implemented. The CLI loads processed Parquet journeys into a small dimensional model and records each pipeline run. Historical weather ingestion and CI are still planned.
 
 ## Data provenance
 - Source: [TfL Cycling Open Data](https://cycling.data.tfl.gov.uk/)
@@ -63,7 +63,9 @@ Verify the installation:
 
 ```bash
 tfl-pipeline clean --help
-pytest -q
+python -m pytest -q
+python -m ruff check src tests
+python -m ruff format --check src tests
 ```
 
 ## Local PostgreSQL
@@ -115,6 +117,19 @@ tfl-pipeline clean \
   --parquet-output data/processed/santander_journeys_clean
 ```
 
+Load the processed journeys into PostgreSQL:
+
+```bash
+set -a
+source .env
+set +a
+
+tfl-pipeline load \
+  --parquet-input data/processed/santander_journeys_clean \
+  --rejected-input data/processed/santander_journeys_rejected.csv \
+  --metadata data/raw/02aJourneyDataExtract07Fe16-20Feb2016.csv.metadata.json
+```
+
 The `--parquet-output` is a directory where the data is partitioned by `journey_date`.
 A successful sample run reports:
 
@@ -133,9 +148,6 @@ Historical TfL CSV URL
         v
 tfl-pipeline ingest
         |
-        v
-IngestionConfig -> download raw file
-        |
         +--> raw CSV
         |
         +--> provenance metadata JSON
@@ -143,17 +155,19 @@ IngestionConfig -> download raw file
                  v
         tfl-pipeline clean
                  |
-                 v
-        PipelineConfig
-                 |
-                 v
-Load -> standardise -> validate -> filter -> normalise
-                 |
-                 +--> accepted rows -> normalise -> cleaned CSV
+                 +--> accepted CSV
                  |
                  +--> rejected CSV with rejection reasons
                  |
-                 +--> ValidationResult and structured logs
+                 +--> date-partitioned Parquet
+                              |
+                              v
+                     tfl-pipeline load
+                              |
+                              +--> dim_station
+                              +--> dim_date
+                              +--> fact_journey
+                              +--> pipeline_run
 ```
 
 ## Validation rules
@@ -166,15 +180,17 @@ Load -> standardise -> validate -> filter -> normalise
 - Input rows must equal accepted rows plus rejected rows.
 - Rerunning cleaning safely replaces both output files.
 
-## Current components:
+## Current components
 
-- `cli.py` provides the `clean` and `ingest` commands and accepts paths
-- `config.py` carries run configuration
-- `clean_journeys.py` performs loading, validation, transformation, and export
-- `validation.py` defines the structured validation result
-- `create_sample.py` creates a deterministic development sample
-- `tests/` contains automated unit tests, and cli, pipeline, ingestion tests
-- `ingest.py` downloads the configured raw CSV and creates its provenance metadata
-- `provenance.py` defines the information recorded about each downloaded source file
+- `cli.py` provides the `ingest`, `clean`, and `load` commands.
+- `config.py` defines configuration for ingestion, cleaning, file-based PostgreSQL loading, and database connections.
+- `ingest.py` downloads the configured raw CSV and writes provenance metadata.
+- `provenance.py` defines the information recorded about each downloaded source file.
+- `clean_journeys.py` validates, transforms, and separates accepted and rejected journeys.
+- `parquet_io.py` writes accepted journeys as a date-partitioned Parquet dataset.
+- `load_postgres.py` prepares and loads stations, dates, journey facts, and pipeline-run records.
+- `sql/schema.sql` defines the PostgreSQL dimensional model, constraints, and indexes.
+- `compose.yaml` runs the local PostgreSQL service and initializes the schema.
+- `tests/` contains unit, pipeline, idempotency, database integration, and transaction rollback tests.
 
-PostgreSQL now runs locally through Docker Compose and initializes the dimensional schema automatically. Loading the processed journey data is the next database stage.
+The latest development-sample load recorded 1,000 input rows, 995 accepted rows, and 5 rejected rows. PostgreSQL contained 995 journey facts, 582 unique stations, and one date. Repeating the same load created a new pipeline-run receipt without duplicating the dimensional or journey data.
