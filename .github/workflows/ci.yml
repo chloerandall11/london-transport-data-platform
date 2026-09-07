@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: london_transport
+      POSTGRES_USER: tfl_pipeline
+      POSTGRES_PASSWORD: ci-test-password
+
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_DB: london_transport
+          POSTGRES_USER: tfl_pipeline
+          POSTGRES_PASSWORD: ci-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tfl_pipeline -d london_transport"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12.11"
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.lock
+
+      - name: Initialize database schema
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U tfl_pipeline -d london_transport < sql/schema.sql
+
+      - name: Check linting
+        run: python -m ruff check src tests
+
+      - name: Check formatting
+        run: python -m ruff format --check src tests
+
+      - name: Run tests
+        run: python -m pytest -q
